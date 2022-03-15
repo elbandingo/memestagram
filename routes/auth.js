@@ -5,8 +5,13 @@ const User = mongoose.model("User");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const {JWT_SECRET} = require('../keys');
+const requireLogin = require('../middleware/requireLogin')
 
-
+//how to validate someone by token using middleware
+router.get('/protected', requireLogin, (req,res)=>{
+    //verify a user that they are carrying the appropriate token
+    res.send("hello user")
+})
 
 //posting username and password for signup
 router.post('/signup',(req,res)=> {
