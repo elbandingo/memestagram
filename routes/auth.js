@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const User = mongoose.model("User");
-//get route
-router.get('/', (req,res) => {
-    res.send("Hello!");
-})
+const bcrypt = require('bcryptjs');
+
+
+
 //posting username and password for signup
 router.post('/signup',(req,res)=> {
     //deconstruct the parameters
@@ -19,26 +19,59 @@ router.post('/signup',(req,res)=> {
         if(savedUser){
             return res.status(422).json({error:"User already exists"})
         }
-        //create a user variable to hold the User constructor Schema object
-        const user = new User({
-            email,
-            name,
-            password
+        //create a user variable to hold the User constructor Schema object, ensure the password is hashed
+        bcrypt.hash(password, 12)
+        .then(hashedPass=>{
+            const user = new User({
+                email,
+                name,
+                password:hashedPass
+            })
+            //call the user object to save, then respond with json that its saved. catch any errors in console.
+            user.save()
+            .then(userData=>{
+                res.json({message:"saved successfully"})
+            })
+            .catch(err=>{
+                console.log(err);
+            })
+
         })
-        //call the user object to save, then respond with json that its saved. catch any errors in console.
-        user.save()
-        .then(userData=>{
-            res.json({message:"saved successfully"})
-        })
-        .catch(err=>{
-            console.log(err);
-        })
+
     })
     //catch error if the find one does work
  .catch(err => {
      console.log(err);
  })
     
+})
+
+//post route to validate the sign in if no email, send that, if password doesnt match, send that.
+router.post('/signin', (req,res) => {
+    const {email,password} = req.body
+    if(!email || !password) {
+        return res.status(422).json({error: "Please provide email or password"})
+    }
+
+    User.findOne({email:email})
+    .then(user => {
+        if(!user) {
+            return res.status(422).json({error:"Invalid Username or does not exist!"})
+        }
+
+        //check if the password matches
+        bcrypt.compare(password, user.password)
+        .then(doMatch=>{
+            if(doMatch) {
+                return res.json({message:"successful sign in!"})
+            } else {
+                return res.status(422).json({error:"invalid password"})
+            }
+        })
+        .catch(err=>{
+            console.log(err)
+        })
+    })
 })
 
 
