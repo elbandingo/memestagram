@@ -24,6 +24,15 @@ mongoose.connection.on('error', ()=>{
     console.log('Error logging on to MongoDB');
 })
 
+//require the Models after the connection is made
+require('./models/user');
+require('./models/posts');
+
+app.use(express.json())
+//use/require the authenticate route
+app.use(require('./routes/auth'))
+app.use(require('./routes/post'))
+
 
 app.listen(PORT, () => {
     console.log(`server is running on ${PORT}`);
